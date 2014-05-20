@@ -1,108 +1,118 @@
 <?php
 
-require __DIR__ . '/../src/Todolist.php';
-
-class TodolistTest extends PHPUnit_Framework_TestCase
+class TodolistTest extends TestCase
 {
-    public function test_TODOリストを作成直後、空のリストである()
+    public function setUp()
     {
-        $todolist = new Todolist();
-        $this->assertEquals(0, $todolist->count());
+        $dao = new Dao\File('test.json');
+        $dao->removeAllTodo();
+        $this->todolist = new Todolist($dao);
+    }
+
+    public function test_TODOリストの作成直後はリストは空である()
+    {
+        $this->assertEquals(0, $this->todolist->count());
     }
     
     /**
-     * @dataProvider provide_TODOの件数
+     * @dataProvider provide_TODOの登録件数
      */
-    public function test_最初のTODOを登録した後、TODOリスト件数がn件である($n)
+    public function test_TODOをn件登録したときTODOリストの件数はn件である($n)
     {
-        $todolist = new Todolist();
+        $todolist = $this->todolist;
         for ($i = 0; $i < $n; $i++) {
-            $todolist->addTodo('新しいTODO');
+            $todo = new \Todo('新しいTODO'.$i);
+            $todolist->addTodo($todo);
         }
         $this->assertEquals($n, $todolist->count());
     }
     
-    public function provide_TODOの件数($n)
+    public function provide_TODOの登録件数($n)
     {
-        return array(
-            array(1),
-            array(2)
-        );
+        return [
+            [1],[2],[3]
+        ];
     }
     
-    public function test_最初のTODOに「新しいTODO」と登録した後、最後のTODOリストの内容が「新しいTODO」である()
+    /**
+     * @dataProvider provide_TODOの登録件数
+     */
+    public function test_TODOをn件登録したとき最後のTODOの内容は最後に登録したものである($n)
     {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $this->assertEquals('新しいTODO', $todolist->getLastTodo());
+        $todolist = $this->todolist;
+        for ($i = 0; $i < $n; $i++) {
+            $todo = new \Todo('新しいTODO'.$i);
+            $todolist->addTodo($todo);
+        }
+        $this->assertEquals('新しいTODO'.($i-1), $todolist->getLastTodo()->getSubject());
     }
     
-    public function test_2件目のTODOに「新しいTODO2」と登録した後、最新のTODOリストの内容が「新しいTODO2」である()
+    /**
+     * @dataProvider provide_TODOの登録件数
+     */
+    public function test_TODOをn件登録したとき最初のTODOの内容は最初に登録したものである($n)
     {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $todolist->addTodo('新しいTODO2');
-        $this->assertEquals('新しいTODO2', $todolist->getLastTodo());
-    }
-        
-    public function test_最初のTODOに「新しいTODO」と登録した後、最初のTODOリストの内容が「新しいTODO」である()
-    {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $this->assertEquals('新しいTODO', $todolist->getFirstTodo());
-    }
-
-    public function test_1件目に「新しいTODO」2件目のTODOに「新しいTODO2」と登録した後、最初のTODOリストの内容が「新しいTODO」である()
-    {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $todolist->addTodo('新しいTODO2');
-        $this->assertEquals('新しいTODO', $todolist->getFirstTodo());
+        $todolist = $this->todolist;
+        for ($i = 0; $i < $n; $i++) {
+            $todo = new \Todo('新しいTODO'.$i);
+            $todolist->addTodo($todo);
+        }
+        $this->assertEquals('新しいTODO0', $todolist->getFirstTodo()->getSubject());
     }
     
-    public function test_TODOを登録した後、全てのTODOの内容が登録されている()
+    public function TODOを2件登録()
     {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $todolist->addTodo('新しいTODO2');
-        $expected = ['新しいTODO', '新しいTODO2'];
-        $this->assertEquals($expected, $todolist->getAllTodo());
+        $todo = new \Todo('新しいTODO');
+        $this->todolist->addTodo($todo);
+        $todo = new \Todo('新しいTODO2');
+        $this->todolist->addTodo($todo);
     }
     
-    public function test_最初に追加したTODOを削除できる()
+    public function test_TODOを2件登録し最初のTODOを削除すると最初のTODOは2件目に登録したものである()
     {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $todolist->addTodo('新しいTODO2');
+        $todolist = $this->todolist;
+        $this->TODOを2件登録();
         $todolist->removeFirstTodo();
-        $this->assertEquals('新しいTODO2', $todolist->getFirstTodo());
+        $this->assertEquals('新しいTODO2', $todolist->getFirstTodo()->getSubject());
     }
     
     public function test_最初に追加したTODOを削除すると件数が減る()
     {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $todolist->addTodo('新しいTODO2');
+        $todolist = $this->todolist;
+        $this->TODOを2件登録();
         $todolist->removeFirstTodo();
         $this->assertEquals(1, $todolist->count());
     }
     
-    public function test_最後に追加したTODOを削除できる()
+    public function test_TODOを2件登録し最後に登録したTODOを削除すると最後のTODOは最初に登録したものである()
     {
-        $todolist = new Todolist();
-        $todolist->addTodo('新しいTODO');
-        $todolist->addTodo('新しいTODO2');
+        $todolist = $this->todolist;
+        $this->TODOを2件登録();
         $todolist->removeLastTodo();
-        $this->assertEquals('新しいTODO', $todolist->getLastTodo());
+        $this->assertEquals('新しいTODO', $todolist->getLastTodo()->getSubject());
     }
     
-    public function test_追加した全てのTODOを削除できる()
+    public function test_追加した全てのTODOを削除するとリストは空である()
     {
-        // @TODO
-//        $todolist = new Todolist();
-//        $todolist->addTodo('新しいTODO');
-//        $todolist->addTodo('新しいTODO2');
-//        $todolist->removeAllTodo();
-//        $this->assertEquals('新しいTODO', $todolist->getLastTodo());
+        $todolist = $this->todolist;
+        $this->TODOを2件登録();
+        $todolist->removeAllTodo();
+        $this->assertEquals(0, $todolist->count());
     }
+    
+    public function test_最初のTODOと最後のTODOを入れ替える()
+    {
+        $todolist = $this->todolist;
+        $todo = new \Todo('新しいTODO');
+        $todolist->addTodo($todo);
+        $todo = new \Todo('新しいTODO2');
+        $todolist->addTodo($todo);
+        $todo = new \Todo('新しいTODO3');
+        $todolist->addTodo($todo);
+        
+        $todolist->swapTodo(0, 2);
+        $this->assertEquals('新しいTODO3', $todolist->getFirstTodo()->getSubject());
+        $this->assertEquals('新しいTODO', $todolist->getLastTodo()->getSubject());
+    }
+
 }

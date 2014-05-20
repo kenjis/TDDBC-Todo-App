@@ -1,45 +1,54 @@
 <?php
 
-ini_set('display_errors', "1");
-
-class Todolist
+class Todolist implements IteratorAggregate
 {
-    private $list;
+    private $dao;
+    
+    public function __construct(Dao\File $dao) {
+        $this->dao = $dao;
+    }
 
     public function count()
     {
-        return count($this->list);
+        return $this->dao->count();
     }
     
-    public function addTodo($todo)
+    public function addTodo(Todo $todo)
     {
-        $this->list[] = $todo;
+        $this->dao->addTodo($todo);
     }
     
     public function getLastTodo()
     {
-        $list = $this->list;
-        return array_pop($list);
+        return $this->dao->getLastTodo();
     }
     
     public function getFirstTodo()
     {
-        $list = $this->list;
-        return array_shift($list);
+        return $this->dao->getFirstTodo();
     }
-    
-    public function getAllTodo()
-    {
-        return $this->list;
-    }
-    
+        
     public function removeFirstTodo()
     {
-        array_shift($this->list);
+        $this->dao->removeFirstTodo();
     }
     
     public function removeLastTodo()
     {
-        array_pop($this->list);
+        $this->dao->removeLastTodo();
+    }
+    
+    public function removeAllTodo()
+    {
+        $this->dao->removeAllTodo();
+    }
+    
+    public function swapTodo($idA, $idB)
+    {
+        $this->dao->swapTodo($idA, $idB);
+    }
+    
+    public function getIterator() {
+        return $this->dao;
     }
 }
